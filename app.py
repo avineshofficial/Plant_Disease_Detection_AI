@@ -1,5 +1,6 @@
 import os
 import io
+import socket
 import base64
 import tensorflow as tf
 import numpy as np
@@ -264,7 +265,31 @@ def predict_webcam():
         return jsonify({'error': f'Failed to process webcam image: {str(e)}'}), 500
 
 
+def is_port_in_use(port, host='127.0.0.1'):
+    """Check if a TCP port is currently occupied."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex((host, port)) == 0
+
+
+def find_available_port(start_port=5001, max_attempts=20):
+    """Find the next available port starting from start_port."""
+    for p in range(start_port, start_port + max_attempts):
+        if not is_port_in_use(p):
+            return p
+    return start_port
+
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
+    # Determine port once so reloader child shares the same port
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        requested_port = int(os.environ.get('PORT', 5001))
+        port = find_available_port(requested_port)
+        if port != requested_port:
+            print(f"Notice: Port {requested_port} is in use. Switched to available port {port}.")
+        os.environ['ACTIVE_PORT'] = str(port)
+    else:
+        port = int(os.environ.get('ACTIVE_PORT', os.environ.get('PORT', 5001)))
+
     print(f"Server starting on http://127.0.0.1:{port}/")
     app.run(debug=True, host='127.0.0.1', port=port)
