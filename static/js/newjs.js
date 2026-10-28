@@ -39,10 +39,19 @@ $(document).ready(function () {
             success: function (data) {
                 // Get and display the result
                 $('.loader').hide();
+                $('#btn-predict').show();
                 $('#result').fadeIn(600);
                 $('#result').text(' Result:  ' + data);
                 console.log('Success!');
             },
+            error: function (xhr, status, error) {
+                $('.loader').hide();
+                $('#btn-predict').show();
+                $('#result').fadeIn(600);
+                var errMsg = xhr.responseText || 'Error occurred during prediction';
+                $('#result').text(' ' + errMsg);
+                console.error('Error:', error);
+            }
         });
     });
 

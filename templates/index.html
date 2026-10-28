@@ -1,29 +1,201 @@
-{% extends "import.html" %} 
+{% extends "import.html" %}
 {% block content %}
 
-<center>
-<br><h2>Plant Disease Classification Using Deep Learning</h2><br>
-
-    <form id="upload-file" method="post" enctype="multipart/form-data">
-         <input type="file" name="file" class="btn btn-success" id="imageUpload" accept=".png, .jpg, .jpeg">
-    </form>
-
-
-    <div class="image-section" style="display:none;">
-         <img id="imagePreview"  class="img-responsive" src="#" style="width:300px;height:300px;"/><br><br>
-         <div>
-            <button type="button" class="btn btn-info btn-lg " id="btn-predict">Predict!</button>
-         </div>
+<!-- ── Hero Section ──────────────────────────────────── -->
+<section class="hero-section">
+    <div class="container text-center">
+        <div class="hero-badge animate-fade-in">
+            <i class="bi bi-shield-check"></i> AI-Powered Plant Health Analysis
+        </div>
+        <h1 class="hero-title animate-fade-in-up">
+            Detect Plant Diseases<br>
+            <span class="gradient-text">In Seconds</span>
+        </h1>
+        <p class="hero-subtitle animate-fade-in-up delay-1">
+            Upload a photo or use your webcam to instantly identify Powdery Mildew, Rust,
+            or confirm a healthy plant — and get expert treatment advice.
+        </p>
     </div>
+</section>
 
+<!-- ── Mode Selector Tabs ─────────────────────────────── -->
+<section class="container mb-5">
+    <div class="mode-selector animate-fade-in-up delay-2">
+        <button class="mode-btn active" id="btn-upload-mode" onclick="switchMode('upload')">
+            <i class="bi bi-cloud-arrow-up-fill"></i>
+            <span>Upload Image</span>
+        </button>
+        <button class="mode-btn" id="btn-webcam-mode" onclick="switchMode('webcam')">
+            <i class="bi bi-webcam"></i>
+            <span>Live Camera</span>
+        </button>
+    </div>
+</section>
 
+<!-- ── Upload Mode ────────────────────────────────────── -->
+<section class="container" id="upload-section">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card glass-card animate-fade-in-up delay-2">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Drop Zone -->
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-content" id="drop-zone-content">
+                            <div class="drop-icon">
+                                <i class="bi bi-image"></i>
+                            </div>
+                            <h5>Drag &amp; drop your leaf image here</h5>
+                            <p class="text-muted mb-3">or click to browse &bull; JPG, PNG accepted</p>
+                            <label class="btn btn-upload" for="imageUpload">
+                                <i class="bi bi-folder2-open"></i> Choose File
+                            </label>
+                        </div>
+                        <!-- Hidden preview (shows after image selected) -->
+                        <div class="preview-container" id="preview-container" style="display:none;">
+                            <img id="imagePreview" src="#" alt="Leaf preview">
+                            <button class="btn-remove-image" id="btn-remove-image" title="Remove image">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
 
-    <div class="loader" style="display:none;"></div>
+                    <form id="upload-file" method="post" enctype="multipart/form-data" style="display:none;">
+                        <input type="file" name="file" id="imageUpload" accept=".png,.jpg,.jpeg">
+                    </form>
 
-    <h3 id="result">
-        <span> </span>
-    </h3>
+                    <!-- Predict Button -->
+                    <div class="text-center mt-4" id="predict-section" style="display:none;">
+                        <button type="button" class="btn btn-predict" id="btn-predict">
+                            <i class="bi bi-search"></i> Analyze Leaf
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
+<!-- ── Webcam Mode ────────────────────────────────────── -->
+<section class="container" id="webcam-section" style="display:none;">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card glass-card animate-fade-in-up">
+                <div class="card-body p-4 p-md-5">
+                    <div class="webcam-container">
+                        <!-- Live video feed -->
+                        <div class="video-wrapper" id="video-wrapper">
+                            <video id="webcam-video" autoplay playsinline></video>
+                            <canvas id="webcam-canvas" style="display:none;"></canvas>
+                            <div class="video-overlay" id="video-overlay">
+                                <i class="bi bi-webcam"></i>
+                                <p>Camera is off</p>
+                            </div>
+                        </div>
 
-</center><br><br>
+                        <!-- Captured frame preview -->
+                        <div class="captured-preview" id="captured-preview" style="display:none;">
+                            <img id="capturedImage" src="#" alt="Captured frame">
+                            <button class="btn-remove-image" id="btn-retake" title="Retake">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="webcam-controls mt-4">
+                        <button class="btn btn-camera-start" id="btn-start-camera">
+                            <i class="bi bi-camera-video"></i> Start Camera
+                        </button>
+                        <button class="btn btn-camera-capture" id="btn-capture" style="display:none;">
+                            <i class="bi bi-camera"></i> Capture
+                        </button>
+                        <button class="btn btn-camera-stop" id="btn-stop-camera" style="display:none;">
+                            <i class="bi bi-camera-video-off"></i> Stop
+                        </button>
+                        <button class="btn btn-predict" id="btn-predict-webcam" style="display:none;">
+                            <i class="bi bi-search"></i> Analyze Leaf
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Loading Spinner ────────────────────────────────── -->
+<div class="loader-overlay" id="loader-overlay" style="display:none;">
+    <div class="loader-card">
+        <div class="spinner-plant">
+            <div class="leaf leaf-1">🍃</div>
+            <div class="leaf leaf-2">🍃</div>
+            <div class="leaf leaf-3">🍃</div>
+        </div>
+        <p class="loader-text">Analyzing your plant...</p>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Results Section ────────────────────────────────── -->
+<section class="container mt-5 mb-5" id="results-section" style="display:none;">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <!-- Diagnosis Card -->
+            <div class="card result-card animate-fade-in-up" id="diagnosis-card">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Status Banner -->
+                    <div class="diagnosis-header" id="diagnosis-header">
+                        <div class="diagnosis-icon" id="diagnosis-icon"></div>
+                        <div class="diagnosis-info">
+                            <h2 class="diagnosis-label" id="diagnosis-label"></h2>
+                            <p class="diagnosis-desc" id="diagnosis-desc"></p>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Bar -->
+                    <div class="confidence-section mt-4">
+                        <h6 class="section-label"><i class="bi bi-bar-chart-fill"></i> Confidence Scores</h6>
+                        <div class="confidence-bars" id="confidence-bars"></div>
+                    </div>
+
+                    <!-- Severity Badge -->
+                    <div class="severity-section mt-4" id="severity-section" style="display:none;">
+                        <span class="severity-badge" id="severity-badge"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treatment Recommendations -->
+            <div class="mt-4" id="recommendations-container"></div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Feature Cards Section ──────────────────────────── -->
+<section class="container features-section mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-card animate-fade-in-up delay-3">
+                <div class="feature-icon">🔬</div>
+                <h5>CNN Deep Learning</h5>
+                <p>Convolutional Neural Network trained on 1,500+ plant leaf images for accurate disease classification.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card animate-fade-in-up delay-4">
+                <div class="feature-icon">📸</div>
+                <h5>Live Camera</h5>
+                <p>Use your device webcam to capture and analyze plant leaves in real-time — no file uploads needed.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card animate-fade-in-up delay-5">
+                <div class="feature-icon">💊</div>
+                <h5>Treatment Advice</h5>
+                <p>Get actionable medicine and care recommendations — chemical, organic, and cultural treatment options.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% endblock %}

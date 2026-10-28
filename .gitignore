@@ -1,3 +1,7 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
 # Ignore virtual environment directories
 venv/
 
@@ -7,5 +11,9 @@ venv/
 # Ignore model.h5
 model.h5
 
-# Ignore model.h5
+# Ignore Dataset
 Dataset/
+
+# Ignore temporary webcam capture
+uploads/webcam_capture.jpg
+
